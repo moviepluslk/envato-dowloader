@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envato Elements Downloader</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Envato Elements Downloader</h1>
+        <div class="input-group">
+            <input type="text" id="envatoUrl" placeholder="Paste Envato Elements URL here...">
+            <button id="transformBtn">Transform & Download</button>
+        </div>
+        <div class="result">
+            <p>Transformed URL: <span id="transformedUrl"></span></p>
+        </div>
+        <div class="status" id="status"></div>
+    </div>
+    <script>
+        document.getElementById('transformBtn').addEventListener('click', async () => {
+            const originalUrl = document.getElementById('envatoUrl').value.trim();
+            if (!originalUrl) {
+                alert('Please enter a valid Envato Elements URL');
+                return;
+            }
+
+            document.getElementById('status').textContent = 'Processing...';
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: originalUrl }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('transformedUrl').textContent = data.transformedUrl;
+                    document.getElementById('status').textContent = 'Download completed successfully!';
+                } else {
+                    document.getElementById('status').textContent = `Error: ${data.message}`;
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
