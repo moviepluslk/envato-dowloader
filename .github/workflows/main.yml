@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Node.js CI/CD Pipeline
 
 on:
   push:
@@ -7,19 +7,52 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-
+    
     strategy:
       matrix:
         node-version: [18.x]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: 'npm'
+
+    - name: Install dependencies (generate package-lock.json)
+      run: npm install
+
+    - name: Clean install dependencies
+      run: npm ci
+
+    - name: Install Puppeteer dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgbm-dev wget xvfb
+        
+    - name: Run tests (if you have any)
+      run: npm test
+      env:
+        CI: true
+
+    - name: Build project (if needed)
+      run: npm run build --if-present
+
+    - name: Verify Puppeteer can launch
+      run: |
+        node -e "require('puppeteer').launch().then(b => b.close())"
+        
+    - name: Upload build artifacts (if needed)
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: build-artifacts
+        path: |
+          public/
+          server/
+        retention-days: 1
